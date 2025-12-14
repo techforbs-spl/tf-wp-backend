@@ -138,6 +138,8 @@ function techforbs_get_logo() {
                 'width' => get_field('site_logo_width', 'option') ?: null,
                 'height' => null,
                 'topbar_text' => function_exists('get_field') ? get_field('topbar_text', 'option') : get_option('site_topbar_text', ''),
+                'topbar_enabled' => function_exists('get_field') ? (bool) get_field('topbar_enabled', 'option') : (bool) get_option('topbar_enabled', true),
+                'topbar_link' => function_exists('get_field') ? get_field('topbar_link', 'option') : get_option('topbar_link', ''),
             ];
         }
 
@@ -164,6 +166,8 @@ function techforbs_get_logo() {
             'width' => wp_get_attachment_image_src($logo_id, 'full')[1] ?? null,
             'height' => wp_get_attachment_image_src($logo_id, 'full')[2] ?? null,
             'topbar_text' => function_exists('get_field') ? get_field('topbar_text', 'option') : get_option('site_topbar_text', ''),
+            'topbar_enabled' => function_exists('get_field') ? (bool) get_field('topbar_enabled', 'option') : (bool) get_option('topbar_enabled', true),
+            'topbar_link' => function_exists('get_field') ? get_field('topbar_link', 'option') : get_option('topbar_link', ''),
         ];
     }
 
@@ -176,6 +180,8 @@ function techforbs_get_logo() {
         'height' => null,
         'message' => 'No logo uploaded. Upload via Settings > TechForbs Settings',
         'topbar_text' => function_exists('get_field') ? get_field('topbar_text', 'option') : get_option('site_topbar_text', ''),
+        'topbar_enabled' => function_exists('get_field') ? (bool) get_field('topbar_enabled', 'option') : (bool) get_option('topbar_enabled', true),
+        'topbar_link' => function_exists('get_field') ? get_field('topbar_link', 'option') : get_option('topbar_link', ''),
     ];
 }
 
