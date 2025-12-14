@@ -317,12 +317,51 @@ add_action('init', function() {
         ),
     ));
 
-    // Footer Settings Field Group (Site Options)
+    // Footer & Header Settings Field Group (Site Options)
+    // NOTE: Header (topbar/logo) and Footer options are kept together in a single
+    // options page called "TechForbs Settings" so the user has a single place
+    // to configure header/topbar and footer details.
     acf_add_local_field_group(array(
         'key' => 'group_techforbs_footer',
-        'title' => 'TechForbs - Footer Settings',
+        'title' => 'TechForbs - Header & Footer Settings',
         'fields' => array(
-            // Logo Section
+            // Header / Topbar fields (moved here so header & footer live in same options page)
+            array(
+                'key' => 'field_tf_site_logo',
+                'label' => 'Site Logo (Header)',
+                'name' => 'site_logo',
+                'type' => 'image',
+                'return_format' => 'url',
+                'preview_size' => 'medium',
+            ),
+            array(
+                'key' => 'field_tf_site_logo_width',
+                'label' => 'Header Logo Width (px)',
+                'name' => 'site_logo_width',
+                'type' => 'number',
+                'default_value' => 160,
+            ),
+            array(
+                'key' => 'field_tf_topbar_enabled',
+                'label' => 'Show Topbar',
+                'name' => 'topbar_enabled',
+                'type' => 'true_false',
+                'ui' => 1,
+                'default_value' => 1,
+            ),
+            array(
+                'key' => 'field_tf_topbar_text',
+                'label' => 'Topbar Text',
+                'name' => 'topbar_text',
+                'type' => 'text',
+            ),
+            array(
+                'key' => 'field_tf_topbar_link',
+                'label' => 'Topbar Link (optional)',
+                'name' => 'topbar_link',
+                'type' => 'url',
+            ),
+            // Footer Logo / legacy footer logo field (kept for backward compatibility)
             array(
                 'key' => 'field_tf_footer_logo',
                 'label' => 'Footer Logo',
@@ -333,7 +372,7 @@ add_action('init', function() {
             ),
             array(
                 'key' => 'field_tf_footer_logo_width',
-                'label' => 'Logo Width (px)',
+                'label' => 'Footer Logo Width (px)',
                 'name' => 'footer_logo_width',
                 'type' => 'number',
                 'default_value' => 150,

@@ -119,24 +119,51 @@ function techforbs_get_menus() {
  * Returns logo URL and attachment data
  */
 function techforbs_get_logo() {
-    $logo_id = get_option('site_logo');
-    
-    // Default to custom_logo if site_logo is not set
+    // Prefer ACF options value (site_logo) if available in TechForbs Settings
+    $acf_logo = function_exists('get_field') ? get_field('site_logo', 'option') : null;
+    $logo_id = null;
+
+    if ($acf_logo) {
+        // If ACF returns an array/object depending on return_format, handle string URL or ID
+        if (is_array($acf_logo) && isset($acf_logo['ID'])) {
+            $logo_id = $acf_logo['ID'];
+        } elseif (is_numeric($acf_logo)) {
+            $logo_id = intval($acf_logo);
+        } elseif (is_string($acf_logo)) {
+            // If it's a URL, return it directly
+            return [
+                'id' => null,
+                'url' => esc_url($acf_logo),
+                'alt' => 'TechForbs Logo',
+                'width' => get_field('site_logo_width', 'option') ?: null,
+                'height' => null,
+                'topbar_text' => function_exists('get_field') ? get_field('topbar_text', 'option') : get_option('site_topbar_text', ''),
+            ];
+        }
+
+    }
+
+    // Fallback to option or theme custom logo if no ACF logo ID
     if (!$logo_id) {
-        $logo_id = get_theme_mod('custom_logo');
+        $logo_option = get_option('site_logo');
+        if ($logo_option) {
+            $logo_id = $logo_option;
+        } else {
+            $logo_id = get_theme_mod('custom_logo');
+        }
     }
 
     if ($logo_id) {
         $logo_url = wp_get_attachment_url($logo_id);
         $logo_alt = get_post_meta($logo_id, '_wp_attachment_image_alt', true);
-        
+
         return [
             'id' => $logo_id,
             'url' => $logo_url,
             'alt' => $logo_alt ?: 'TechForbs Logo',
             'width' => wp_get_attachment_image_src($logo_id, 'full')[1] ?? null,
             'height' => wp_get_attachment_image_src($logo_id, 'full')[2] ?? null,
-            'topbar_text' => get_option('site_topbar_text', ''),
+            'topbar_text' => function_exists('get_field') ? get_field('topbar_text', 'option') : get_option('site_topbar_text', ''),
         ];
     }
 
@@ -147,8 +174,8 @@ function techforbs_get_logo() {
         'alt' => 'TechForbs',
         'width' => null,
         'height' => null,
-        'message' => 'No logo uploaded. Upload via Settings > Logo or Theme Customize > Site Identity',
-        'topbar_text' => get_option('site_topbar_text', ''),
+        'message' => 'No logo uploaded. Upload via Settings > TechForbs Settings',
+        'topbar_text' => function_exists('get_field') ? get_field('topbar_text', 'option') : get_option('site_topbar_text', ''),
     ];
 }
 
