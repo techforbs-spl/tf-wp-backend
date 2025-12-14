@@ -486,3 +486,20 @@ function techforbs_sanitize_section_settings($settings) {
     }
     return $safe;
 }
+
+// Add TechForbs Settings Options Page for ACF
+add_action('acf/init', 'techforbs_add_options_page');
+
+function techforbs_add_options_page() {
+    if (function_exists('acf_add_options_page')) {
+        acf_add_options_page(array(
+            'page_title' => 'TechForbs Settings',
+            'menu_title' => 'TechForbs Settings',
+            'menu_slug' => 'techforbs-settings',
+            'capability' => 'manage_options',
+            'redirect' => false,
+            'position' => 30,
+            'icon_url' => 'dashicons-admin-generic',
+        ));
+    }
+}

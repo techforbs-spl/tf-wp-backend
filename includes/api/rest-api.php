@@ -39,6 +39,13 @@ function techforbs_register_component_rest_routes() {
         'permission_callback' => '__return_true',
     ]);
 
+    // Footer Settings Endpoint
+    register_rest_route('techforbs/v1', '/footer-settings', [
+        'methods' => 'GET',
+        'callback' => 'techforbs_get_footer_settings',
+        'permission_callback' => '__return_true',
+    ]);
+
     // Page Data Endpoint - returns per-page sections (from post meta) and SEO data
     register_rest_route('techforbs/v1', '/page-data', [
         'methods' => 'GET',
@@ -145,6 +152,37 @@ function techforbs_get_logo() {
     ];
 }
 
+/**
+ * GET /wp-json/techforbs/v1/footer-settings
+ * Returns all footer settings from site options
+ */
+function techforbs_get_footer_settings() {
+    // Get ACF option fields (requires ACF Pro or free version)
+    if (function_exists('get_field')) {
+        return [
+            'company_description' => get_field('footer_company_description', 'option') ?: 'Perfect IT Solutions for any Business & Startups',
+            'email' => get_field('footer_email', 'option') ?: 'info@techforbs.com',
+            'phone' => get_field('footer_phone', 'option') ?: '+91 971 401 9476',
+            'services' => get_field('footer_services', 'option') ?: [],
+            'company_links' => get_field('footer_company_links', 'option') ?: [],
+            'legal_links' => get_field('footer_legal_links', 'option') ?: [],
+            'social_links' => get_field('footer_social_links', 'option') ?: [],
+            'copyright' => get_field('footer_copyright', 'option') ?: '© TechForbs. All rights reserved.',
+        ];
+    }
+
+    // Fallback if ACF is not active
+    return [
+        'company_description' => 'Perfect IT Solutions for any Business & Startups',
+        'email' => 'info@techforbs.com',
+        'phone' => '+91 971 401 9476',
+        'services' => [],
+        'company_links' => [],
+        'legal_links' => [],
+        'social_links' => [],
+        'copyright' => '© TechForbs. All rights reserved.',
+    ];
+}
 
 /**
  * GET /wp-json/techforbs/v1/page-data

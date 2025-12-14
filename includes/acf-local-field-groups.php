@@ -316,4 +316,137 @@ add_action('init', function() {
             ),
         ),
     ));
+
+    // Footer Settings Field Group (Site Options)
+    acf_add_local_field_group(array(
+        'key' => 'group_techforbs_footer',
+        'title' => 'TechForbs - Footer Settings',
+        'fields' => array(
+            array(
+                'key' => 'field_tf_footer_company_description',
+                'label' => 'Company Description',
+                'name' => 'footer_company_description',
+                'type' => 'textarea',
+            ),
+            array(
+                'key' => 'field_tf_footer_email',
+                'label' => 'Email Address',
+                'name' => 'footer_email',
+                'type' => 'email',
+            ),
+            array(
+                'key' => 'field_tf_footer_phone',
+                'label' => 'Phone Number',
+                'name' => 'footer_phone',
+                'type' => 'text',
+            ),
+            array(
+                'key' => 'field_tf_footer_services',
+                'label' => 'Services Links',
+                'name' => 'footer_services',
+                'type' => 'repeater',
+                'button_label' => 'Add Service',
+                'sub_fields' => array(
+                    array(
+                        'key' => 'field_tf_footer_service_title',
+                        'label' => 'Title',
+                        'name' => 'title',
+                        'type' => 'text',
+                    ),
+                    array(
+                        'key' => 'field_tf_footer_service_url',
+                        'label' => 'URL',
+                        'name' => 'url',
+                        'type' => 'url',
+                    ),
+                ),
+            ),
+            array(
+                'key' => 'field_tf_footer_company_links',
+                'label' => 'Company Links',
+                'name' => 'footer_company_links',
+                'type' => 'repeater',
+                'button_label' => 'Add Link',
+                'sub_fields' => array(
+                    array(
+                        'key' => 'field_tf_footer_company_link_title',
+                        'label' => 'Title',
+                        'name' => 'title',
+                        'type' => 'text',
+                    ),
+                    array(
+                        'key' => 'field_tf_footer_company_link_url',
+                        'label' => 'URL',
+                        'name' => 'url',
+                        'type' => 'url',
+                    ),
+                ),
+            ),
+            array(
+                'key' => 'field_tf_footer_legal_links',
+                'label' => 'Legal Links',
+                'name' => 'footer_legal_links',
+                'type' => 'repeater',
+                'button_label' => 'Add Legal Link',
+                'sub_fields' => array(
+                    array(
+                        'key' => 'field_tf_footer_legal_link_title',
+                        'label' => 'Title',
+                        'name' => 'title',
+                        'type' => 'text',
+                    ),
+                    array(
+                        'key' => 'field_tf_footer_legal_link_url',
+                        'label' => 'URL',
+                        'name' => 'url',
+                        'type' => 'url',
+                    ),
+                ),
+            ),
+            array(
+                'key' => 'field_tf_footer_social_links',
+                'label' => 'Social Media Links',
+                'name' => 'footer_social_links',
+                'type' => 'repeater',
+                'button_label' => 'Add Social Link',
+                'sub_fields' => array(
+                    array(
+                        'key' => 'field_tf_footer_social_platform',
+                        'label' => 'Platform',
+                        'name' => 'platform',
+                        'type' => 'select',
+                        'choices' => array(
+                            'linkedin' => 'LinkedIn',
+                            'twitter' => 'Twitter',
+                            'github' => 'GitHub',
+                            'facebook' => 'Facebook',
+                            'instagram' => 'Instagram',
+                        ),
+                    ),
+                    array(
+                        'key' => 'field_tf_footer_social_url',
+                        'label' => 'URL',
+                        'name' => 'url',
+                        'type' => 'url',
+                    ),
+                ),
+            ),
+            array(
+                'key' => 'field_tf_footer_copyright',
+                'label' => 'Copyright Text',
+                'name' => 'footer_copyright',
+                'type' => 'text',
+                'default_value' => '© TechForbs. All rights reserved.',
+            ),
+        ),
+        'location' => array(
+            array(
+                array(
+                    'param' => 'options_page',
+                    'operator' => '==',
+                    'value' => 'techforbs-settings',
+                ),
+            ),
+        ),
+    ));
 });
