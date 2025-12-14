@@ -322,10 +322,33 @@ add_action('init', function() {
         'key' => 'group_techforbs_footer',
         'title' => 'TechForbs - Footer Settings',
         'fields' => array(
+            // Logo Section
+            array(
+                'key' => 'field_tf_footer_logo',
+                'label' => 'Footer Logo',
+                'name' => 'footer_logo',
+                'type' => 'image',
+                'return_format' => 'url',
+                'preview_size' => 'medium',
+            ),
+            array(
+                'key' => 'field_tf_footer_logo_width',
+                'label' => 'Logo Width (px)',
+                'name' => 'footer_logo_width',
+                'type' => 'number',
+                'default_value' => 150,
+            ),
+            // Company Info Section
             array(
                 'key' => 'field_tf_footer_company_description',
                 'label' => 'Company Description',
                 'name' => 'footer_company_description',
+                'type' => 'textarea',
+            ),
+            array(
+                'key' => 'field_tf_footer_address',
+                'label' => 'Address',
+                'name' => 'footer_address',
                 'type' => 'textarea',
             ),
             array(
@@ -340,6 +363,22 @@ add_action('init', function() {
                 'name' => 'footer_phone',
                 'type' => 'text',
             ),
+            // Get In Touch CTA
+            array(
+                'key' => 'field_tf_footer_cta_link',
+                'label' => 'Get In Touch Button Link',
+                'name' => 'footer_cta_link',
+                'type' => 'url',
+                'default_value' => '/contact',
+            ),
+            array(
+                'key' => 'field_tf_footer_cta_text',
+                'label' => 'Get In Touch Button Text',
+                'name' => 'footer_cta_text',
+                'type' => 'text',
+                'default_value' => 'Get In Touch',
+            ),
+            // Services Links
             array(
                 'key' => 'field_tf_footer_services',
                 'label' => 'Services Links',
@@ -361,6 +400,7 @@ add_action('init', function() {
                     ),
                 ),
             ),
+            // Company Links
             array(
                 'key' => 'field_tf_footer_company_links',
                 'label' => 'Company Links',
@@ -382,6 +422,7 @@ add_action('init', function() {
                     ),
                 ),
             ),
+            // Legal Links
             array(
                 'key' => 'field_tf_footer_legal_links',
                 'label' => 'Legal Links',
@@ -403,6 +444,7 @@ add_action('init', function() {
                     ),
                 ),
             ),
+            // Social Links
             array(
                 'key' => 'field_tf_footer_social_links',
                 'label' => 'Social Media Links',
@@ -431,6 +473,7 @@ add_action('init', function() {
                     ),
                 ),
             ),
+            // Copyright
             array(
                 'key' => 'field_tf_footer_copyright',
                 'label' => 'Copyright Text',

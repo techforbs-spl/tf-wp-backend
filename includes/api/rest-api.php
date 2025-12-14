@@ -160,9 +160,14 @@ function techforbs_get_footer_settings() {
     // Get ACF option fields (requires ACF Pro or free version)
     if (function_exists('get_field')) {
         return [
+            'logo' => get_field('footer_logo', 'option'),
+            'logo_width' => get_field('footer_logo_width', 'option') ?: 150,
             'company_description' => get_field('footer_company_description', 'option') ?: 'Perfect IT Solutions for any Business & Startups',
+            'address' => get_field('footer_address', 'option') ?: 'E-1219, Ganesh Glory 11, S.G. Highway, Ahmedabad 382470',
             'email' => get_field('footer_email', 'option') ?: 'info@techforbs.com',
             'phone' => get_field('footer_phone', 'option') ?: '+91 971 401 9476',
+            'cta_link' => get_field('footer_cta_link', 'option') ?: '/contact',
+            'cta_text' => get_field('footer_cta_text', 'option') ?: 'Get In Touch',
             'services' => get_field('footer_services', 'option') ?: [],
             'company_links' => get_field('footer_company_links', 'option') ?: [],
             'legal_links' => get_field('footer_legal_links', 'option') ?: [],
@@ -173,9 +178,14 @@ function techforbs_get_footer_settings() {
 
     // Fallback if ACF is not active
     return [
+        'logo' => null,
+        'logo_width' => 150,
         'company_description' => 'Perfect IT Solutions for any Business & Startups',
+        'address' => 'E-1219, Ganesh Glory 11, S.G. Highway, Ahmedabad 382470',
         'email' => 'info@techforbs.com',
         'phone' => '+91 971 401 9476',
+        'cta_link' => '/contact',
+        'cta_text' => 'Get In Touch',
         'services' => [],
         'company_links' => [],
         'legal_links' => [],
