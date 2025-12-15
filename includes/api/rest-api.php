@@ -100,11 +100,36 @@ function techforbs_get_menus() {
                     'url' => $item->url,
                     'target' => $item->target,
                     'description' => $item->description,
+                    // expose parent so frontend can reconstruct nested menus
+                    'menu_item_parent' => intval($item->menu_item_parent),
+                    'menu_order' => intval($item->menu_order),
                 ];
             }
+
+            // Build nested tree from flat list using menu_item_parent
+            $itemsById = [];
+            foreach ($formatted_items as $fi) {
+                $fi['children'] = [];
+                $itemsById[$fi['ID']] = $fi;
+            }
+
+            $rootItems = [];
+            foreach ($itemsById as $id => $it) {
+                $parentId = $it['menu_item_parent'];
+                if ($parentId && isset($itemsById[$parentId])) {
+                    $itemsById[$parentId]['children'][] = &$itemsById[$id];
+                } else {
+                    $rootItems[] = &$itemsById[$id];
+                }
+            }
+
+            // sort root items by menu_order
+            usort($rootItems, function($a, $b) { return ($a['menu_order'] ?? 0) - ($b['menu_order'] ?? 0); });
+
+            $menus[$location] = $rootItems;
+        } else {
+            $menus[$location] = $formatted_items;
         }
-        
-        $menus[$location] = $formatted_items;
     }
 
     return [
