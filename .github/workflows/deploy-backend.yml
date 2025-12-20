@@ -1,5 +1,7 @@
 name: Deploy WP Backend to Hostinger
 
+name: Deploy WP Backend to Hostinger
+
 on:
   workflow_dispatch:
     inputs:
@@ -29,9 +31,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set defaults
+      - name: Set defaults (compute PLUGIN_PATH)
         run: |
-          echo "PLUGIN_PATH=${{ github.event.inputs.plugin_path || 'techforbs-components' }}" >> $GITHUB_ENV
+          PLUGIN_PATH="${{ github.event.inputs.plugin_path }}"
+          if [ -z "$PLUGIN_PATH" ]; then
+            PLUGIN_PATH="techforbs-components"
+          fi
+          echo "PLUGIN_PATH=$PLUGIN_PATH" >> $GITHUB_ENV
 
       - name: Show repo files (sanity)
         run: ls -la
@@ -45,16 +51,14 @@ jobs:
           zip -r plugin-deploy.zip "$PLUGIN_DIR"
           ls -lh plugin-deploy.zip
 
-
-
       - name: Optional remote backup (requires SSH_KEY) - prepare
-        if: ${{ env.SSH_KEY }}
+        if: ${{ secrets.HOSTINGER_SSH_KEY }}
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
 
       - name: Optional remote backup (requires SSH_KEY) - run
-        if: ${{ env.SSH_KEY }}
+        if: ${{ secrets.HOSTINGER_SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.HOSTINGER_FTP_HOST }}
@@ -79,11 +83,11 @@ jobs:
           username: ${{ secrets.HOSTINGER_FTP_USER }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           port: ${{ secrets.HOSTINGER_FTP_PORT }}
-          local-dir: ${{ github.event.inputs.plugin_path || 'techforbs-components' }}
+          local-dir: ${{ env.PLUGIN_PATH }}
           server-dir: ${{ secrets.HOSTINGER_FTP_TARGET_DIR }}
 
       - name: Post-deploy: set permissions (SSH) (optional)
-        if: ${{ env.SSH_KEY }}
+        if: ${{ secrets.HOSTINGER_SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.HOSTINGER_FTP_HOST }}
