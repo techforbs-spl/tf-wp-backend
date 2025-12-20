@@ -278,23 +278,25 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
         }
     }
 
-    if (!$post) {
-        return new WP_Error('not_found', 'Page not found', [ 'status' => 404 ]);
-    }
+    // If no post was found for the requested path, do NOT immediately return 404.
+    // Instead, allow the endpoint to return sections sourced from ACF options
+    // (global site settings) so front-page-level content can still be retrieved
+    // even when WP is set to "Your latest posts" and no static front page.
+    $post_id = $post ? $post->ID : null;
 
-    // Basic post data
+    // Basic post data (may be empty when no post found)
     $data = [
-        'ID' => $post->ID,
-        'title' => get_the_title($post),
-        'slug' => $post->post_name,
-        'link' => get_permalink($post),
-        'excerpt' => apply_filters('the_excerpt', $post->post_excerpt),
-        'content' => apply_filters('the_content', $post->post_content),
-        'featured_media' => $post->post_thumbnail ? $post->post_thumbnail : null,
+        'ID' => $post ? $post->ID : null,
+        'title' => $post ? get_the_title($post) : '',
+        'slug' => $post ? $post->post_name : '',
+        'link' => $post ? get_permalink($post) : '',
+        'excerpt' => $post ? apply_filters('the_excerpt', $post->post_excerpt) : '',
+        'content' => $post ? apply_filters('the_content', $post->post_content) : '',
+        'featured_media' => $post && isset($post->post_thumbnail) ? $post->post_thumbnail : null,
     ];
 
     // Sections stored in post meta (JSON or array)
-    $sections_raw = get_post_meta($post->ID, 'techforbs_sections', true);
+    $sections_raw = $post_id ? get_post_meta($post_id, 'techforbs_sections', true) : null;
     $sections = [];
     if ($sections_raw) {
         if (is_string($sections_raw)) {
@@ -306,27 +308,27 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
     }
 
     // Simple header override
-    $header_style = get_post_meta($post->ID, 'techforbs_header_style', true) ?: '';
-    $topbar_text = get_post_meta($post->ID, 'techforbs_topbar_text', true) ?: '';
+    $header_style = $post_id ? get_post_meta($post_id, 'techforbs_header_style', true) : '';
+    $topbar_text = $post_id ? get_post_meta($post_id, 'techforbs_topbar_text', true) : '';
 
     // Yoast SEO common meta (if Yoast is active these will often be set)
     $yoast = [
-        'title' => get_post_meta($post->ID, '_yoast_wpseo_title', true),
-        'meta_desc' => get_post_meta($post->ID, '_yoast_wpseo_metadesc', true),
-        'canonical' => get_post_meta($post->ID, '_yoast_wpseo_canonical', true),
-        'focuskw' => get_post_meta($post->ID, '_yoast_wpseo_focuskw', true),
+        'title' => $post_id ? get_post_meta($post_id, '_yoast_wpseo_title', true) : '',
+        'meta_desc' => $post_id ? get_post_meta($post_id, '_yoast_wpseo_metadesc', true) : '',
+        'canonical' => $post_id ? get_post_meta($post_id, '_yoast_wpseo_canonical', true) : '',
+        'focuskw' => $post_id ? get_post_meta($post_id, '_yoast_wpseo_focuskw', true) : '',
     ];
 
     // If Yoast supplies a JSON head entry in postmeta, include it too
-    $yoast_head_json = get_post_meta($post->ID, 'yoast_head_json', true);
+    $yoast_head_json = $post_id ? get_post_meta($post_id, 'yoast_head_json', true) : null;
     if ($yoast_head_json) {
         $yoast['head_json'] = is_string($yoast_head_json) ? json_decode($yoast_head_json, true) : $yoast_head_json;
     }
 
     // Featured image URL
     $feature = null;
-    if (has_post_thumbnail($post)) {
-        $thumb_id = get_post_thumbnail_id($post);
+    if ($post_id && has_post_thumbnail($post_id)) {
+        $thumb_id = get_post_thumbnail_id($post_id);
         $feature = [
             'id' => $thumb_id,
             'url' => wp_get_attachment_url($thumb_id),
@@ -341,7 +343,8 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
             if (isset($s['type']) && $s['type'] === 'services') { $has_services = true; break; }
         }
 
-        $acf_items = get_field('items', $post->ID);
+        // Read services repeater from ACF (distinct field name)
+        $acf_items = get_field('services_items', $post_id);
         if (!$has_services && is_array($acf_items) && count($acf_items) > 0) {
             $svc_items = [];
             foreach ($acf_items as $it) {
@@ -359,8 +362,8 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
                 'id' => '',
                 'header_style' => '',
                 'settings' => [
-                    'title' => sanitize_text_field(get_field('title', $post->ID) ?: ''),
-                    'subtitle' => sanitize_text_field(get_field('subtitle', $post->ID) ?: ''),
+                    'title' => sanitize_text_field(get_field('title', $post_id) ?: ''),
+                    'subtitle' => sanitize_text_field(get_field('subtitle', $post_id) ?: ''),
                     'cards' => $svc_items,
                 ],
             ];
@@ -374,7 +377,8 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
             if (isset($s['type']) && $s['type'] === 'why_choose_us') { $has_why_choose = true; break; }
         }
 
-        $why_items = get_field('items', 'option') ? get_field('items', 'option') : get_field('items', $post->ID);
+        // Read why-choose repeater (prefer options then post-level)
+        $why_items = get_field('why_items', 'option') ? get_field('why_items', 'option') : get_field('why_items', $post_id);
         if (!$has_why_choose && is_array($why_items) && count($why_items) > 0) {
             $why_feature_items = [];
             foreach ($why_items as $it) {
@@ -392,11 +396,55 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
                 'id' => '',
                 'header_style' => '',
                 'settings' => [
-                    'title' => sanitize_text_field(get_field('title', $post->ID) ?: 'Why Choose Us') ?? '',
-                    'subtitle' => sanitize_text_field(get_field('subtitle', $post->ID) ?: '') ?? '',
+                    'title' => sanitize_text_field(get_field('title', $post_id) ?: 'Why Choose Us') ?? '',
+                    'subtitle' => sanitize_text_field(get_field('subtitle', $post_id) ?: '') ?? '',
                     'items' => $why_feature_items,
                 ],
             ];
+        }
+        // If a why_choose_us section exists in post meta but contains only
+        // empty placeholder items, prefer actual ACF items (options or
+        // post-level). This handles the case where an editor created the
+        // section but left the repeater rows empty while ACF options hold
+        // the real features.
+        if ($has_why_choose) {
+            foreach ($sections as $idx => $s) {
+                if (isset($s['type']) && $s['type'] === 'why_choose_us') {
+                    $settings_items = $s['settings']['items'] ?? [];
+
+                    // Consider items empty if there are no rows or all rows
+                    // have empty title and description.
+                    $hasValues = false;
+                    if (is_array($settings_items) && count($settings_items) > 0) {
+                        foreach ($settings_items as $it) {
+                            $t = trim((string)($it['title'] ?? ''));
+                            $d = trim((string)($it['description'] ?? ''));
+                            if ($t !== '' || $d !== '') { $hasValues = true; break; }
+                        }
+                    }
+
+                    if (!$hasValues) {
+                        $acf_fallback = get_field('why_items', 'option') ? get_field('why_items', 'option') : get_field('why_items', $post_id);
+                        if (is_array($acf_fallback) && count($acf_fallback) > 0) {
+                            $new_items = [];
+                            foreach ($acf_fallback as $it) {
+                                $new_items[] = [
+                                    'title' => sanitize_text_field($it['title'] ?? ''),
+                                    'description' => sanitize_textarea_field($it['description'] ?? ''),
+                                    'icon_name' => sanitize_text_field($it['icon_name'] ?? ''),
+                                    'color' => sanitize_text_field($it['color'] ?? ''),
+                                    'link' => esc_url_raw($it['link'] ?? ''),
+                                ];
+                            }
+
+                            // Replace the settings.items with ACF-sourced items
+                            $sections[$idx]['settings']['items'] = $new_items;
+                        }
+                    }
+                    // Only adjust the first matching section
+                    break;
+                }
+            }
         }
     }
 
@@ -407,24 +455,58 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
             if (isset($s['type']) && $s['type'] === 'logos') { $has_logos = true; break; }
         }
 
-        $logos_items = get_field('logos', $post->ID);
-        if (!$has_logos && is_array($logos_items) && count($logos_items) > 0) {
+        $logos_items = get_field('logos', 'option') ? get_field('logos', 'option') : get_field('logos', $post_id);
+        if (is_array($logos_items) && count($logos_items) > 0) {
             $logos_arr = [];
             foreach ($logos_items as $logo) {
                 $logos_arr[] = [
                     'name' => sanitize_text_field($logo['name'] ?? ''),
-                    'logo_url' => esc_url_raw($logo['logo_url'] ?? ''),
+                    'logo_url' => esc_url_raw(is_array($logo['logo_url']) ? ($logo['logo_url']['url'] ?? '') : ($logo['logo_url'] ?? '')),
                 ];
             }
+
+            // Remove any existing logos sections to avoid duplicates
+            $sections = array_values(array_filter($sections, function($s) { return !isset($s['type']) || $s['type'] !== 'logos'; }));
 
             $sections[] = [
                 'type' => 'logos',
                 'id' => '',
                 'header_style' => '',
                 'settings' => [
-                    'title' => sanitize_text_field(get_field('title', $post->ID) ?: 'Trusted By 1000+ Companies') ?? '',
-                    'subtitle' => sanitize_text_field(get_field('subtitle', $post->ID) ?: '') ?? '',
+                    'title' => sanitize_text_field(get_field('logos_title', $post_id) ?: get_field('logos_title', 'option') ?: 'Trusted By 1000+ Companies'),
+                    'subtitle' => sanitize_text_field(get_field('logos_subtitle', $post_id) ?: get_field('logos_subtitle', 'option') ?: ''),
                     'logos' => $logos_arr,
+                ],
+            ];
+        }
+    }
+
+    // --- Build clean services section from ACF (prefer options, then post-level)
+    if (function_exists('get_field')) {
+        $services_items = get_field('services_items', 'option') ? get_field('services_items', 'option') : get_field('services_items', $post_id);
+        if (is_array($services_items) && count($services_items) > 0) {
+            $cards = [];
+            foreach ($services_items as $svc) {
+                $cards[] = [
+                    'title' => sanitize_text_field($svc['title'] ?? ''),
+                    'description' => sanitize_textarea_field($svc['description'] ?? ''),
+                    'icon_name' => sanitize_text_field($svc['icon_name'] ?? ''),
+                    'color' => sanitize_text_field($svc['color'] ?? ''),
+                    'link' => esc_url_raw($svc['link'] ?? ''),
+                ];
+            }
+
+            // Remove any existing services sections to avoid duplicates
+            $sections = array_values(array_filter($sections, function($s) { return !isset($s['type']) || $s['type'] !== 'services'; }));
+
+            $sections[] = [
+                'type' => 'services',
+                'id' => '',
+                'header_style' => '',
+                'settings' => [
+                    'title' => sanitize_text_field(get_field('services_title', $post_id) ?: get_field('services_title', 'option') ?: 'Our Services'),
+                    'subtitle' => sanitize_text_field(get_field('services_subtitle', $post_id) ?: get_field('services_subtitle', 'option') ?: ''),
+                    'cards' => $cards,
                 ],
             ];
         }
@@ -437,7 +519,7 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
             if (isset($s['type']) && $s['type'] === 'testimonials') { $has_testimonials = true; break; }
         }
 
-        $test_items = get_field('testimonials', $post->ID);
+        $test_items = get_field('testimonials', $post_id);
         if (!$has_testimonials && is_array($test_items) && count($test_items) > 0) {
             $tests = [];
             foreach ($test_items as $t) {
@@ -454,8 +536,8 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
                 'id' => '',
                 'header_style' => '',
                 'settings' => [
-                    'title' => sanitize_text_field(get_field('title', $post->ID) ?: 'Testimonials') ?? '',
-                    'subtitle' => sanitize_text_field(get_field('subtitle', $post->ID) ?: '') ?? '',
+                    'title' => sanitize_text_field(get_field('title', $post_id) ?: 'Testimonials') ?? '',
+                    'subtitle' => sanitize_text_field(get_field('subtitle', $post_id) ?: '') ?? '',
                     'testimonials' => $tests,
                 ],
             ];
@@ -469,7 +551,7 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
             if (isset($s['type']) && $s['type'] === 'faq') { $has_faq = true; break; }
         }
 
-        $faq_items = get_field('faqs', $post->ID);
+        $faq_items = get_field('faqs', $post_id);
         if (!$has_faq && is_array($faq_items) && count($faq_items) > 0) {
             $faq_arr = [];
             foreach ($faq_items as $f) {
@@ -484,8 +566,8 @@ function techforbs_get_page_data(\WP_REST_Request $request) {
                 'id' => '',
                 'header_style' => '',
                 'settings' => [
-                    'title' => sanitize_text_field(get_field('title', $post->ID) ?: 'FAQ') ?? '',
-                    'subtitle' => sanitize_text_field(get_field('subtitle', $post->ID) ?: '') ?? '',
+                    'title' => sanitize_text_field(get_field('title', $post_id) ?: 'FAQ') ?? '',
+                    'subtitle' => sanitize_text_field(get_field('subtitle', $post_id) ?: '') ?? '',
                     'faqs' => $faq_arr,
                 ],
             ];

@@ -7,6 +7,30 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Ensure the `techforbs_sections` meta is registered for REST so Gutenberg
+// will persist the meta when saving via the block editor. Register for
+// both 'page' and 'post' types.
+add_action('init', 'techforbs_register_section_meta');
+function techforbs_register_section_meta() {
+    if (function_exists('register_post_meta')) {
+        register_post_meta('page', 'techforbs_sections', [
+            'show_in_rest' => true,
+            'single' => true,
+            // Stored value is an array of section objects — expose as array to REST
+            'type' => 'array',
+            'auth_callback' => function() { return current_user_can('edit_posts'); }
+        ]);
+
+        register_post_meta('post', 'techforbs_sections', [
+            'show_in_rest' => true,
+            'single' => true,
+            // Stored value is an array of section objects — expose as array to REST
+            'type' => 'array',
+            'auth_callback' => function() { return current_user_can('edit_posts'); }
+        ]);
+    }
+}
+
 // Add logo upload to general settings
 add_action('admin_init', 'techforbs_add_logo_setting');
 
@@ -135,6 +159,65 @@ function techforbs_add_sections_meta_box() {
         'normal',
         'high'
     );
+}
+
+/**
+ * One-time migration: normalize existing `techforbs_sections` postmeta values.
+ *
+ * Some installations stored invalid values (string "null" or serialized data)
+ * which cause REST validation failures. Run once on admin init and mark as
+ * migrated to avoid repeated work.
+ */
+add_action('admin_init', 'techforbs_migrate_sections_meta_once');
+function techforbs_migrate_sections_meta_once() {
+    if (!current_user_can('manage_options')) return;
+
+    // Only run once
+    if (get_option('techforbs_sections_migrated', false)) return;
+
+    global $wpdb;
+
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT meta_id, post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s",
+        'techforbs_sections'
+    ));
+
+    if (empty($rows)) {
+        update_option('techforbs_sections_migrated', true);
+        return;
+    }
+
+    foreach ($rows as $r) {
+        $post_id = intval($r->post_id);
+        $raw = $r->meta_value;
+
+        // If value is the literal string "null" or empty, delete it
+        if (is_string($raw) && (trim($raw) === '' || trim($raw) === 'null')) {
+            delete_post_meta($post_id, 'techforbs_sections');
+            continue;
+        }
+
+        // Try JSON decode first (JSON stored by the admin UI)
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                update_post_meta($post_id, 'techforbs_sections', $decoded);
+                continue;
+            }
+        }
+
+        // Try PHP unserialize fallback (legacy storage)
+        $maybe = @unserialize($raw);
+        if ($maybe !== false && is_array($maybe)) {
+            update_post_meta($post_id, 'techforbs_sections', $maybe);
+            continue;
+        }
+
+        // Otherwise leave value alone (could be valid array already), or remove obvious invalid strings
+    }
+
+    // Mark migration complete
+    update_option('techforbs_sections_migrated', true);
 }
 
 function techforbs_sections_meta_box_cb($post) {
@@ -337,18 +420,25 @@ function techforbs_sections_meta_box_cb($post) {
                         subtitle: subtitle
                     };
                     
-                    // Handle repeater rows for "why_choose_us"
-                            if (type === 'why_choose_us') {
+                    // Handle repeater rows for "why_choose_us" and "services"
+                    if (type === 'why_choose_us' || type === 'services') {
                         var repeaterContainer = row.querySelector('.tf-repeater-container');
                         if (repeaterContainer) {
                             var repeaterRows = Array.from(repeaterContainer.querySelectorAll('.tf-repeater-row'));
-                                    settings.items = repeaterRows.map(rrow => ({
-                                        title: rrow.querySelector('.tf-repeater-field-title').value,
-                                        description: rrow.querySelector('.tf-repeater-field-description').value,
-                                        color: rrow.querySelector('.tf-repeater-field-color').value,
-                                        icon_name: rrow.querySelector('.tf-repeater-field-icon').value,
-                                        link: (rrow.querySelector('.tf-repeater-field-link') ? rrow.querySelector('.tf-repeater-field-link').value : '')
-                                    }));
+                            var mapped = repeaterRows.map(rrow => ({
+                                title: rrow.querySelector('.tf-repeater-field-title').value,
+                                description: rrow.querySelector('.tf-repeater-field-description').value,
+                                color: rrow.querySelector('.tf-repeater-field-color').value,
+                                icon_name: rrow.querySelector('.tf-repeater-field-icon').value,
+                                link: (rrow.querySelector('.tf-repeater-field-link') ? rrow.querySelector('.tf-repeater-field-link').value : '')
+                            }));
+
+                            if (type === 'why_choose_us') {
+                                settings.items = mapped;
+                            } else {
+                                // services expect `cards` key
+                                settings.cards = mapped;
+                            }
                         }
                     }
                     

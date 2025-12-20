@@ -33,7 +33,8 @@ add_action('init', function() {
             array(
                 'key' => 'field_tf_services_items',
                 'label' => 'Services',
-                'name' => 'items',
+                // Use a distinct field name to avoid collision with other groups
+                'name' => 'services_items',
                 'type' => 'repeater',
                 'button_label' => 'Add Service',
                 'sub_fields' => array(
@@ -103,7 +104,8 @@ add_action('init', function() {
             array(
                 'key' => 'field_tf_why_items',
                 'label' => 'Features',
-                'name' => 'items',
+                // Use a distinct field name for Why Choose Us repeater
+                'name' => 'why_items',
                 'type' => 'repeater',
                 'button_label' => 'Add Feature',
                 'sub_fields' => array(
