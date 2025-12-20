@@ -23,7 +23,6 @@ jobs:
       FTP_PASS: "${{ secrets.HOSTINGER_FTP_PASSWORD }}"
       FTP_PORT: "${{ secrets.HOSTINGER_FTP_PORT }}"
       FTP_TARGET_DIR: "${{ secrets.HOSTINGER_FTP_TARGET_DIR }}"
-      SSH_KEY: "${{ secrets.HOSTINGER_SSH_KEY }}"
 
     steps:
       - name: Checkout
@@ -49,30 +48,7 @@ jobs:
           zip -r plugin-deploy.zip "$PLUGIN_DIR"
           ls -lh plugin-deploy.zip
 
-      - name: Optional remote backup (requires SSH_KEY) - prepare
-        if: "${{ secrets.HOSTINGER_SSH_KEY }}"
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: "${{ secrets.HOSTINGER_SSH_KEY }}"
-
-      - name: Optional remote backup (requires SSH_KEY) - run
-        if: "${{ secrets.HOSTINGER_SSH_KEY }}"
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: "${{ secrets.HOSTINGER_FTP_HOST }}"
-          username: "${{ secrets.HOSTINGER_FTP_USER }}"
-          port: "${{ secrets.HOSTINGER_FTP_PORT || '22' }}"
-          key: "${{ secrets.HOSTINGER_SSH_KEY }}"
-          script: |
-            set -e
-            TS=$(date +"%Y%m%d-%H%M%S")
-            TARGET="${{ secrets.HOSTINGER_FTP_TARGET_DIR }}"
-            if [ -d "$TARGET" ]; then
-              echo "Creating backup $TARGET.bak.$TS"
-              mv "$TARGET" "$TARGET.bak.$TS" || echo "mv failed or no permission"
-            else
-              echo "No existing target to backup: $TARGET"
-            fi
+      # SSH backup steps removed — FTP-only deploy
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
@@ -84,19 +60,7 @@ jobs:
           local-dir: "${{ env.PLUGIN_PATH }}"
           server-dir: "${{ secrets.HOSTINGER_FTP_TARGET_DIR }}"
 
-      - name: Post-deploy: set permissions (SSH) (optional)
-        if: "${{ secrets.HOSTINGER_SSH_KEY }}"
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: "${{ secrets.HOSTINGER_FTP_HOST }}"
-          username: "${{ secrets.HOSTINGER_FTP_USER }}"
-          port: "${{ secrets.HOSTINGER_FTP_PORT || '22' }}"
-          key: "${{ secrets.HOSTINGER_SSH_KEY }}"
-          script: |
-            set -e
-            TARGET="${{ secrets.HOSTINGER_FTP_TARGET_DIR }}"
-            echo "Setting permissions on $TARGET"
-            chmod -R 755 "$TARGET" || true
+      # Post-deploy SSH steps removed — using FTP only
 
       - name: Done
         run: echo "Deployment job finished."
