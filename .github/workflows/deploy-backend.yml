@@ -18,12 +18,12 @@ jobs:
     name: Deploy (FTP)
     runs-on: ubuntu-latest
     env:
-      FTP_HOST: ${{ secrets.HOSTINGER_FTP_HOST }}
-      FTP_USER: ${{ secrets.HOSTINGER_FTP_USER }}
-      FTP_PASS: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-      FTP_PORT: ${{ secrets.HOSTINGER_FTP_PORT }}
-      FTP_TARGET_DIR: ${{ secrets.HOSTINGER_FTP_TARGET_DIR }}
-      SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+      FTP_HOST: "${{ secrets.HOSTINGER_FTP_HOST }}"
+      FTP_USER: "${{ secrets.HOSTINGER_FTP_USER }}"
+      FTP_PASS: "${{ secrets.HOSTINGER_FTP_PASSWORD }}"
+      FTP_PORT: "${{ secrets.HOSTINGER_FTP_PORT }}"
+      FTP_TARGET_DIR: "${{ secrets.HOSTINGER_FTP_TARGET_DIR }}"
+      SSH_KEY: "${{ secrets.HOSTINGER_SSH_KEY }}"
 
     steps:
       - name: Checkout
@@ -53,16 +53,16 @@ jobs:
         if: ${{ secrets.HOSTINGER_SSH_KEY }}
         uses: webfactory/ssh-agent@v0.7.0
         with:
-          ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          ssh-private-key: "${{ secrets.HOSTINGER_SSH_KEY }}"
 
       - name: Optional remote backup (requires SSH_KEY) - run
         if: ${{ secrets.HOSTINGER_SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
-          host: ${{ secrets.HOSTINGER_FTP_HOST }}
-          username: ${{ secrets.HOSTINGER_FTP_USER }}
-          port: ${{ secrets.HOSTINGER_FTP_PORT || '22' }}
-          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          host: "${{ secrets.HOSTINGER_FTP_HOST }}"
+          username: "${{ secrets.HOSTINGER_FTP_USER }}"
+          port: "${{ secrets.HOSTINGER_FTP_PORT || '22' }}"
+          key: "${{ secrets.HOSTINGER_SSH_KEY }}"
           script: |
             set -e
             TS=$(date +"%Y%m%d-%H%M%S")
@@ -77,21 +77,21 @@ jobs:
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          server: ${{ secrets.HOSTINGER_FTP_HOST }}
-          username: ${{ secrets.HOSTINGER_FTP_USER }}
-          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_FTP_PORT }}
-          local-dir: ${{ env.PLUGIN_PATH }}
-          server-dir: ${{ secrets.HOSTINGER_FTP_TARGET_DIR }}
+          server: "${{ secrets.HOSTINGER_FTP_HOST }}"
+          username: "${{ secrets.HOSTINGER_FTP_USER }}"
+          password: "${{ secrets.HOSTINGER_FTP_PASSWORD }}"
+          port: "${{ secrets.HOSTINGER_FTP_PORT }}"
+          local-dir: "${{ env.PLUGIN_PATH }}"
+          server-dir: "${{ secrets.HOSTINGER_FTP_TARGET_DIR }}"
 
       - name: Post-deploy: set permissions (SSH) (optional)
         if: ${{ secrets.HOSTINGER_SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
-          host: ${{ secrets.HOSTINGER_FTP_HOST }}
-          username: ${{ secrets.HOSTINGER_FTP_USER }}
-          port: ${{ secrets.HOSTINGER_FTP_PORT || '22' }}
-          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          host: "${{ secrets.HOSTINGER_FTP_HOST }}"
+          username: "${{ secrets.HOSTINGER_FTP_USER }}"
+          port: "${{ secrets.HOSTINGER_FTP_PORT || '22' }}"
+          key: "${{ secrets.HOSTINGER_SSH_KEY }}"
           script: |
             set -e
             TARGET="${{ secrets.HOSTINGER_FTP_TARGET_DIR }}"
