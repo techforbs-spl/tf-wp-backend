@@ -51,7 +51,7 @@ jobs:
           ls -lh plugin-deploy.zip
 
       - name: Dry-run: list remote target (only when dry_run=true)
-        if: env.DRY_RUN == 'true'
+        if: ${{ env.DRY_RUN == 'true' }}
         run: |
           echo "=== DRY RUN ==="
           sudo apt-get update -y && sudo apt-get install -y lftp
@@ -59,13 +59,13 @@ jobs:
           lftp -u "${FTP_USER}","${FTP_PASS}" -p ${FTP_PORT} ${FTP_HOST} -e "cls -1 ${FTP_TARGET_DIR}; bye"
 
       - name: Optional remote backup (requires SSH_KEY) - prepare
-        if: env.DRY_RUN != 'true' && env.SSH_KEY
+        if: ${{ env.DRY_RUN != 'true' && env.SSH_KEY }}
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
 
       - name: Optional remote backup (requires SSH_KEY) - run
-        if: env.DRY_RUN != 'true' && env.SSH_KEY
+        if: ${{ env.DRY_RUN != 'true' && env.SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.HOSTINGER_FTP_HOST }}
@@ -84,7 +84,7 @@ jobs:
             fi
 
       - name: Deploy via FTP
-        if: env.DRY_RUN != 'true'
+        if: ${{ env.DRY_RUN != 'true' }}
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
           server: ${{ secrets.HOSTINGER_FTP_HOST }}
@@ -95,7 +95,7 @@ jobs:
           server-dir: ${{ secrets.HOSTINGER_FTP_TARGET_DIR }}
 
       - name: Post-deploy: set permissions (SSH) (optional)
-        if: env.DRY_RUN != 'true' && env.SSH_KEY
+        if: ${{ env.DRY_RUN != 'true' && env.SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.HOSTINGER_FTP_HOST }}
