@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       plugin_path:
-        description: 'Path in repo to deploy (relative)'
+        description: 'Path in repo to deploy (relative). Use "." for repo root.'
         required: false
-        default: 'techforbs-components'
+        default: '.'
   push:
     branches:
       - main
@@ -42,10 +42,17 @@ jobs:
       - name: Create archive
         run: |
           PLUGIN_DIR="$PLUGIN_PATH"
-          if [ ! -d "$PLUGIN_DIR" ]; then
-            echo "Directory $PLUGIN_DIR not found, listing root and failing." && ls -la && exit 1
+          # Allow archiving repo root (.) or a subdirectory.
+          if [ "$PLUGIN_DIR" = "." ] || [ "$PLUGIN_DIR" = "./" ]; then
+            echo "Archiving repository root to plugin-deploy.zip (excluding .git)"
+            zip -r plugin-deploy.zip . -x ".git/*" -x "plugin-deploy.zip"
+          else
+            if [ ! -e "$PLUGIN_DIR" ]; then
+              echo "Directory or path $PLUGIN_DIR not found, listing root and failing." && ls -la && exit 1
+            fi
+            echo "Archiving $PLUGIN_DIR to plugin-deploy.zip (excluding .git)"
+            zip -r plugin-deploy.zip "$PLUGIN_DIR" -x ".git/*" -x "plugin-deploy.zip"
           fi
-          zip -r plugin-deploy.zip "$PLUGIN_DIR"
           ls -lh plugin-deploy.zip
 
       # SSH backup steps removed — FTP-only deploy
