@@ -39,7 +39,7 @@ jobs:
       - name: Show repo files (sanity)
         run: ls -la
 
-      - name: Debug: print workspace and plugin path
+      - name: "Debug: print workspace and plugin path"
         run: |
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
           echo "PWD: $(pwd)"
