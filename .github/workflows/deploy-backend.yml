@@ -39,6 +39,25 @@ jobs:
       - name: Show repo files (sanity)
         run: ls -la
 
+      - name: Debug: print workspace and plugin path
+        run: |
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          echo "PWD: $(pwd)"
+          echo "PLUGIN_PATH (env): $PLUGIN_PATH"
+          if [ -z "$PLUGIN_PATH" ]; then
+            echo "PLUGIN_PATH is empty"
+          else
+            if command -v realpath >/dev/null 2>&1; then
+              echo "Resolved PLUGIN_PATH:" $(realpath "$PLUGIN_PATH")
+            elif command -v readlink >/dev/null 2>&1; then
+              echo "Resolved PLUGIN_PATH:" $(readlink -f "$PLUGIN_PATH")
+            else
+              echo "realpath/readlink not available to resolve PLUGIN_PATH"
+            fi
+            echo "Listing PLUGIN_PATH contents (if exists):"
+            ls -la "$PLUGIN_PATH" || echo "PLUGIN_PATH does not exist"
+          fi
+
       - name: Create archive
         run: |
           PLUGIN_DIR="$PLUGIN_PATH"
