@@ -3,10 +3,6 @@ name: Deploy WP Backend to Hostinger
 on:
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'If true, only list remote files (no upload)'
-        required: false
-        default: 'true'
       plugin_path:
         description: 'Path in repo to deploy (relative)'
         required: false
@@ -36,7 +32,6 @@ jobs:
       - name: Set defaults
         run: |
           echo "PLUGIN_PATH=${{ github.event.inputs.plugin_path || 'techforbs-components' }}" >> $GITHUB_ENV
-          echo "DRY_RUN=${{ github.event.inputs.dry_run || 'true' }}" >> $GITHUB_ENV
 
       - name: Show repo files (sanity)
         run: ls -la
@@ -50,22 +45,16 @@ jobs:
           zip -r plugin-deploy.zip "$PLUGIN_DIR"
           ls -lh plugin-deploy.zip
 
-      - name: Dry-run: list remote target (only when dry_run=true)
-        if: ${{ env.DRY_RUN == 'true' }}
-        run: |
-          echo "=== DRY RUN ==="
-          sudo apt-get update -y && sudo apt-get install -y lftp
-          echo "Listing remote target ${FTP_TARGET_DIR} on ${FTP_HOST}:${FTP_PORT} as ${FTP_USER}"
-          lftp -u "${FTP_USER}","${FTP_PASS}" -p ${FTP_PORT} ${FTP_HOST} -e "cls -1 ${FTP_TARGET_DIR}; bye"
+
 
       - name: Optional remote backup (requires SSH_KEY) - prepare
-        if: ${{ env.DRY_RUN != 'true' && env.SSH_KEY }}
+        if: ${{ env.SSH_KEY }}
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
 
       - name: Optional remote backup (requires SSH_KEY) - run
-        if: ${{ env.DRY_RUN != 'true' && env.SSH_KEY }}
+        if: ${{ env.SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.HOSTINGER_FTP_HOST }}
@@ -84,7 +73,6 @@ jobs:
             fi
 
       - name: Deploy via FTP
-        if: ${{ env.DRY_RUN != 'true' }}
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
           server: ${{ secrets.HOSTINGER_FTP_HOST }}
@@ -95,7 +83,7 @@ jobs:
           server-dir: ${{ secrets.HOSTINGER_FTP_TARGET_DIR }}
 
       - name: Post-deploy: set permissions (SSH) (optional)
-        if: ${{ env.DRY_RUN != 'true' && env.SSH_KEY }}
+        if: ${{ env.SSH_KEY }}
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.HOSTINGER_FTP_HOST }}
