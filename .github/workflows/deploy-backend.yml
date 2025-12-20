@@ -1,7 +1,5 @@
 name: Deploy WP Backend to Hostinger
 
-name: Deploy WP Backend to Hostinger
-
 on:
   workflow_dispatch:
     inputs:
